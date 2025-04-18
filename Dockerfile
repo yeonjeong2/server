@@ -1,11 +1,15 @@
-# OpenJDK 17 기반 이미지 사용
+# -------- 1단계: 빌드 단계 --------
+FROM gradle:7.6.2-jdk17-alpine as builder
+
+WORKDIR /app
+COPY . .
+RUN gradle build -x test
+
+# -------- 2단계: 실행 단계 --------
 FROM bellsoft/liberica-openjdk-alpine:17
 
-# JAR 파일의 위치를 빌드 아규먼트로 지정
-ARG JAR_FILE=build/libs/*.jar
+WORKDIR /app
+COPY --from=builder /app/build/libs/*.jar app.jar
 
-# JAR 파일을 컨테이너에 복사
-COPY ${JAR_FILE} app.jar
-
-# 애플리케이션 실행
-ENTRYPOINT ["java", "-jar", "/app.jar"]
+EXPOSE 8080
+ENTRYPOINT ["java", "-jar", "app.jar"]
